@@ -28,17 +28,11 @@ library(tmap) # creating custom maps tool
 
 ```
 
-
 ### Get the data
 
-Direct downloads: 
-HI Statewide GIS Portal
-- Watersheds: https://geoportal.hawaii.gov/search?groupIds=4ef473112ddd427d844394e44b62dba2
-- Agriculture Lands: https://geoportal.hawaii.gov/datasets/342ee6c7547f45ddbfc07caf4ca2887d_19/explore?location=20.542715%2C-157.274800%2C7.41
+Direct downloads: HI Statewide GIS Portal - Watersheds: <https://geoportal.hawaii.gov/search?groupIds=4ef473112ddd427d844394e44b62dba2> - Agriculture Lands: <https://geoportal.hawaii.gov/datasets/342ee6c7547f45ddbfc07caf4ca2887d_19/explore?location=20.542715%2C-157.274800%2C7.41>
 
-Ocean Tipping Points PACIOOS:
-- Presence / Absence of Invasive Algae Raster: https://www.pacioos.hawaii.edu/projects/oceantippingpoints/#data
-
+Ocean Tipping Points PACIOOS: - Presence / Absence of Invasive Algae Raster: <https://www.pacioos.hawaii.edu/projects/oceantippingpoints/#data>
 
 ### Working with Vectors
 
@@ -53,12 +47,12 @@ crs(watersheds) #3750 nad83 utm4
 
 mapview(watersheds)
 
-# filter for large watersheds only, watersheds named Waimea
+# filter for large watersheds only, and watershedd named Waimea
 
-range(watersheds$st_areasha) # what is the range
+range(watersheds$area_m2) # what is the range?
 
 large_watersheds <- watersheds %>% 
-  filter(st_areasha > 9e07)
+  filter(area_m2 > 9e07)
 
 waimea_watersheds <- watersheds %>% 
   filter(wuname == "Waimea")
@@ -75,16 +69,30 @@ mapview(oahu_watersheds) # yay
 
 # read in agricultural data
 
+ag_map <- st_read(here("data/Agriculture/Agricultural_Land_Use_-_2020_Update.shp"))
+crs(ag_map)
 
-# challenge - filter for only the following crops: 
+mapview(ag_map, zcol = "crops_2020")
+
+# challenge 1: filter for only the following crops: 
+# Pasture
+# Pineapple
+# Diversified Crop
+# Banana
+# Aquaculture
+
+specific_crops <- ag_map %>% 
+  filter(crops_2020 %in% c("Pasture","Pineapple","Diversified Crop","Banana","Aquaculture"))
+
+# challange 2: get only oahu
+
+oahu_specific <- specific_crops %>% 
+  filter(island == "Oahu")
 
 
-
-
-
+mapview(oahu_specific)
 
 ```
-
 
 ### Working with rasters
 
@@ -98,8 +106,6 @@ class(invasive_alg) # what is it
 crs(invasive_alg)# different!
 res(invasive_alg) # get resolution - decimal degrees
 plot(invasive_alg)
-
-
 
 # multiply all the numbers by 5
 
@@ -127,5 +133,15 @@ plot(oahu_alg)
 
 ```
 
-
 ### Make a Map
+
+```{r}
+
+
+
+
+
+
+
+
+```
