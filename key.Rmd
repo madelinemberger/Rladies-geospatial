@@ -1,0 +1,131 @@
+---
+title: "KEY Into to Geospatial RLadies"
+author: "Madeline Berger"
+date: "2025-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# setup
+# install packages if you dont have them - you only need this once
+# install.packages(c("tidyverse",
+#                    "sf",
+#                    "terra",
+#                    "mapview",
+#                    "tmap"))
+                 
+# load the packages - do this every session
+
+library(tidyverse) # all purpose data wrangling 
+library(here) # alternative to set_wd
+library(sf) # for working with vectors
+library(terra) # for working with rasters
+library(mapview) # quick visualization tool
+library(tmap) # creating custom maps tool
+
+
+```
+
+
+### Get the data
+
+Direct downloads: 
+HI Statewide GIS Portal
+- Watersheds: https://geoportal.hawaii.gov/search?groupIds=4ef473112ddd427d844394e44b62dba2
+- Agriculture Lands: https://geoportal.hawaii.gov/datasets/342ee6c7547f45ddbfc07caf4ca2887d_19/explore?location=20.542715%2C-157.274800%2C7.41
+
+Ocean Tipping Points PACIOOS:
+- Presence / Absence of Invasive Algae Raster: https://www.pacioos.hawaii.edu/projects/oceantippingpoints/#data
+
+
+### Working with Vectors
+
+```{r}
+
+# read in the watersheds
+
+watersheds <- st_read(here("data/Watersheds/Watersheds.shp"))
+
+class(watersheds)
+crs(watersheds) #3750 nad83 utm4
+
+mapview(watersheds)
+
+# filter for large watersheds only, watersheds named Waimea
+
+range(watersheds$st_areasha) # what is the range
+
+large_watersheds <- watersheds %>% 
+  filter(st_areasha > 9e07)
+
+waimea_watersheds <- watersheds %>% 
+  filter(wuname == "Waimea")
+
+# subset to oahu only 
+oahu_watersheds <- watersheds %>% 
+  mutate(wuc = as.numeric(wuc)) %>% 
+  filter(wuc > 3000 & wuc < 3999)
+
+mapview(oahu_watersheds) # yay
+
+# re calculate area
+
+
+# read in agricultural data
+
+
+# challenge - filter for only the following crops: 
+
+
+
+
+
+
+```
+
+
+### Working with rasters
+
+```{r}
+
+# read in the algea raster - its more like a matrix
+
+invasive_alg <- rast(here("data/hi_otp_all_invasive_algae.tif"))
+
+class(invasive_alg) # what is it
+crs(invasive_alg)# different!
+res(invasive_alg) # get resolution - decimal degrees
+plot(invasive_alg)
+
+
+
+# multiply all the numbers by 5
+
+invasive_alg5 <- invasive_alg * 5
+plot(invasive_alg5)
+
+# project
+
+invasive_alg_utm <- terra::project(invasive_alg, crs(oahu_watersheds),  method = "near") # do with and without near
+# why? changes the number of rows and columns in a data set
+
+# look at resolution again
+res(invasive_alg_utm)
+
+# crop to oahu
+
+oahu_alg <- terra::crop(invasive_alg_utm,oahu_watersheds)
+
+plot(oahu_alg)
+
+# set 0 to na
+oahu_alg[oahu_alg == 0] <- NA
+
+plot(oahu_alg)
+
+```
+
+
+### Make a Map
