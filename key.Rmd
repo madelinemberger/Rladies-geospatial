@@ -137,11 +137,40 @@ plot(oahu_alg)
 
 ```{r}
 
+# make a map 
+
+# palette for crops
+crops_pal = c(
+  "Banana" = "yellow1",
+  "Pineapple" = "goldenrod2",
+  "Diversified Crop" = "forestgreen",
+  "Pasture" = "cornsilk3",
+  "Aquaculture" = "aquamarine2"
+)
+
+# Set tmap to plot mode
+tmap_mode("plot")
+
+# Build the map
+tm <- tm_shape(oahu_alg) +
+  tm_raster(palette = "olivedrab", title = "Invasive Algae Location", alpha = 0.4) +
+  tm_shape(oahu_watersheds) +
+  tm_borders(col = "grey", lwd = 1) +
+  tm_shape(oahu_specific) +
+  tm_fill(col = "crops_2020", palette = crops_pal, lwd = 1.5, title = "Selected Oahu Agriculture") +
+  tm_layout(main.title = "Invasive Algae and Selected Crops",
+            legend.outside = TRUE) 
 
 
+tm
 
+# save your map as a png!
 
-
+tmap_save(tm, filename = "output_map.png", 
+          width = 10,
+          height = 8,
+          units = "in",
+          dpi = 300)
 
 
 ```
