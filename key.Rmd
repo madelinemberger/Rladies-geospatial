@@ -10,11 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # setup
 # install packages if you dont have them - you only need this once
-# install.packages(c("tidyverse",
-#                    "sf",
-#                    "terra",
-#                    "mapview",
-#                    "tmap"))
+install.packages(c("tidyverse",
+                   "here",
+                   "sf",
+                   "terra",
+                   "mapview",
+                   "tmap"))
                  
 # load the packages - do this every session
 

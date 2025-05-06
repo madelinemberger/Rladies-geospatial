@@ -1,0 +1,134 @@
+---
+title: "code"
+author: "Madeline Berger"
+date: "2025-05-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#install.packages(c("tidyverse","here","sf","terra","mapview","tmap"))
+
+library(tidyverse)
+library(here)
+library(sf)
+library(terra)
+library(mapview)
+library(tmap)
+
+
+```
+
+# Working with vectors
+
+```{r}
+
+# read in the watersheds
+
+watersheds <- st_read(here("data/Watersheds/Watersheds.shp"))
+class(watersheds)
+crs(watersheds) # 3750 nad83 utm 4
+
+mapview(watersheds)
+
+# filter
+range(watersheds$area_m2)
+
+large_watersheds <- watersheds %>% 
+  filter(area_m2 > 9e07)
+mapview(large_watersheds)
+
+waimea_watersheds <- watersheds %>% 
+  filter(wuname == "Waimea")
+
+oahu_watersheds <- watersheds %>% 
+  mutate(wuc = as.numeric(wuc)) %>% 
+  filter(wuc > 3000 & wuc < 3999)
+
+mapview(oahu_watersheds)
+
+# agriculture data
+
+ag_map <- st_read(here("data/Agriculture/Agricultural_Land_Use_-_2020_Update.shp"))
+
+crs(ag_map)
+
+mapview(ag_map, col.regions = "brown", alpha = 0.5)+mapview(oahu_watersheds)
+
+# challenge 1: filter for only the following crops: 
+# Pasture
+# Pineapple
+# Diversified Crop
+# Banana
+# Aquaculture
+ #just oahu 
+
+oahu_crops <- ag_map %>% 
+  filter(crops_2020 %in% c("Pasture","Pineapple","Diversified Crop","Banana","Aquaculture")) %>% 
+  filter(island == "Oahu") %>% 
+  mutate(area_m2 = st_area(.))
+
+```
+
+```{r}
+
+invasive_alg <- terra::rast(here("data/hi_otp_all_invasive_algae.tif"))
+class(invasive_alg)
+crs(invasive_alg)
+res(invasive_alg)
+
+plot(invasive_alg)
+
+inv_alg5 <- invasive_alg * 5
+plot(inv_alg5)
+
+
+inv_alg_utm <- terra::project(invasive_alg, crs(oahu_watersheds), method = "near")
+
+plot(inv_alg_utm)
+
+oahu_alg <- terra::crop(inv_alg_utm, oahu_watersheds)
+
+oahu_alg[oahu_alg == 0] <- NA
+
+plot(oahu_alg)
+
+```
+# Make Map
+
+```{r}
+
+oahu_crops$crops_2020 <- as.factor(oahu_crops$crops_2020)
+
+crops_pal = c(
+  "Banana" = "yellow1",
+  "Pineapple" = "goldenrod2",
+  "Diversified Crop" = "forestgreen",
+  "Pasture" = "cornsilk3",
+  "Aquaculture" = "aquamarine2"
+)
+
+tm <- tm_shape(oahu_alg)+
+  tm_raster(palette = "olivedrab", title = "Invasive Algae Location",alpha=0.4)+
+  tm_shape(oahu_watersheds)+
+  tm_borders(col = "grey", lwd = 1)+
+  tm_shape(oahu_crops)+
+  tm_fill(col = "crops_2020", palette = crops_pal, lwd = 1.5, title = "Selected Oahu Agriculture")+
+  tm_layout(main.title = "Where is the algae?",
+            legend.outside = T)
+
+tm
+
+tmap_save(tm,
+          filename = "output_map.png",
+          width = 10,
+          height = 8,
+          units = "in",
+          dpi = 300)
+
+
+
+```
+
